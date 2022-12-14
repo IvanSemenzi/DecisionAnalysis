@@ -19,7 +19,7 @@ x2 = r*np.sin(theta)
 
 # create the figure
 fig, ax = plt.subplots(1)
-line1, = ax.plot(x1, x2)                                     # plot circle
+ax.plot(x1, x2)                                     # plot circle
 ax.plot([-1, 1, 1, -1, -1], [-1, -1, 1, 1, -1])     # plot square
 plt.xlim(-1.1, 1.1)
 plt.ylim(-1.1, 1.1)
