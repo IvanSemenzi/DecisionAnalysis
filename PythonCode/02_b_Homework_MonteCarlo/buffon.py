@@ -11,7 +11,7 @@ for i in N:
 
     crosses = np.sum(abs(np.floor(y0) - np.floor(y1)))      # number of needle crossing the line
 
-    p_hat = float(crosses/i)
+    p_hat = float(crosses/i)                                # estimsate of the probability
 
     print(f'The estimate of p after {i} experiments is : {p_hat}')
 
