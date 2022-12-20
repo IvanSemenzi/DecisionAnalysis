@@ -21,7 +21,7 @@ def IC_singlerun(T_max:int, C_max:int) -> (int, int, int, int):
 
     W_real = np.random.choice(np.arange(W_max + 1), T_max, replace=True, p=pW)  # realizations of demand
 
-    x[0] = C_max                                        # initial condizion
+    x[0] = C_max                                        # initial condition
 
     for t,w in enumerate(W_real):
         if x[t] < x_min:                                # reorder
