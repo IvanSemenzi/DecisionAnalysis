@@ -3,7 +3,6 @@ antlr4-python3-runtime==4.8
 appdirs==1.4.4
 black==21.4b2
 cachetools==4.2.4
-certifi @ file:///C:/b/abs_ac29jvt43w/croot/certifi_1665076682579/work/certifi
 charset-normalizer==2.0.10
 click==8.0.3
 cloudpickle==2.0.0
