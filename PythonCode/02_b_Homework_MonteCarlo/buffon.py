@@ -1,18 +1,36 @@
-import numpy as np
+import random as rnd
 import math
 
-N = [100, 1_000, 10_000, 1_000_000]                         # different number of simulations
+class Neeedle:                  #Needle class embendeds all information for describing a needle 
+    def __init__(self):
+        self.extreme_1 = 0
+        self.extreme_2 = 0
+        self.angle = 0
 
-for i in N:
-    y0 = np.random.rand(i)                                  # y coordinate of the bottom left edge of the needle
-    theta = math.pi * (2 * np.random.rand(i) - 1)           # angle of the needle
+    
 
-    y1 = y0 + np.cos(theta)                                 # y coordinate of the other edge of the needle
+    def throw(self):            
+        self.extreme_1 = rnd.uniform(0,1)                       #extreme_1 random between [0,1]
+        self.angle = rnd.uniform(-1,1)*math.pi                  #angle random  [pi, -pi]
+        self.extreme_2= self.extreme_1+math.sin(self.angle)     #compute extreme_2 
+    
+    def intersect(self):                                        #bool function for the intersection
+        if self.extreme_2<=0 or self.extreme_2>=1:
+           # print("intersect")
+            return True
+            
+        else:
+            #print("not intersect")
+            return False
 
-    crosses = np.sum(abs(np.floor(y0) - np.floor(y1)))      # number of needle crossing the line
+count=0
+N=10000
 
-    p_hat = float(crosses/i)                                # estimate of the probability
+a=Neeedle()
+for i in range(N):
+    a.throw()                       #throwing N times the needle
+    if a.intersect()==True:         
+        count=count+1               #count how many time we had the intersection
 
-    print(f'The estimate of p after {i} experiments is : {p_hat}')
 
-print(f'The actual value of p is {2/math.pi}')
+print(count/N)
