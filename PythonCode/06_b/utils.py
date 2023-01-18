@@ -119,7 +119,7 @@ def DP_IC_expected_cost(s: int, u: int, V_next: np.ndarray) -> int:
     # expected value of cost to go
     # compute all the possible next states and corresponding probabilities
     x_next = np.zeros(W_max+1, dtype=int)
-    p_x_next = np.zeros(W_max+1, dtype=int)
+    p_x_next = np.zeros(W_max+1)
     for l in range(W_max+1):
         # all possible next states
         x_next[l] = DP_IC_f(s, u, W_set[l])
@@ -128,8 +128,10 @@ def DP_IC_expected_cost(s: int, u: int, V_next: np.ndarray) -> int:
 
     # compute expected value
     ev = np.dot(p_x_next, V_next[x_next])
-    for h in range(W_max+1):
-        ev += p_x_next[h] * V_next[x_next[h]]
+    # same thing, different implementation
+    # ev = 0
+    # for h in range(W_max+1):
+    #     ev += p_x_next[h] * V_next[x_next[h]]
 
     # expected value of stage cost + cost-to-go
     ec = esc + ev
@@ -154,10 +156,10 @@ def DP_IC_optimal_policy(T: int):
 
     # possible inputs depend on the current state
     # U_set[k] contains the possible input values when we are in state k
-    for k in X_set:
-        start = max(0, W_max - k)
-        stop = C - k + 1
-        U_set[k] = np.arange(start, stop, dtype=int)
+    for k in range(N_state):
+        start = max(0, W_max - X_set[k])
+        stop = C - X_set[k] + 1
+        U_set[X_set[k]] = np.arange(start, stop, dtype=int)
 
     # optimal policy (optimal input at time t if in state x)
     U = np.zeros((N_state, T), dtype=int)
@@ -221,9 +223,9 @@ def DP_IC_plot(gt_star: np.ndarray, gt_h1: np.ndarray,
 
     # TOTAL COST OPTIMAL POLICY
     fig, ax = plt.subplots()
-    fig.suptitle(f'Optimal policy - Total cost distribution from N={Nrun} simulation runs (T={T})')
-    z_star, bins_star, _patches = ax.hist(J_star, bins=20, density=True, label='Histogram')
-    ax.plot([mJ_star, mJ_star], [0, np.amax(z_star)], 'r', label=f'Mean = {round(mJ_star)}')
+    fig.suptitle(f'Optimal policy\nTotal cost distribution from N={Nrun} simulation runs (T={T})')
+    z_star, bins_star, _patches = ax.hist(J_star, bins=20, density=True, label='Histogram', color='red')
+    ax.plot([mJ_star, mJ_star], [0, np.amax(z_star)], color='pink', linestyle='dashed', label=f'Mean = {round(mJ_star)}')
     ax.set(xlabel='Total cost', ylabel='Probability density')
     ax.legend()
     plt.grid()
@@ -231,9 +233,9 @@ def DP_IC_plot(gt_star: np.ndarray, gt_h1: np.ndarray,
 
     # TOTAL COST HEURISTIC 1
     fig, ax = plt.subplots()
-    fig.suptitle(f'Heuristic policy 1 - Total cost distribution from N={Nrun} simulation runs (T={T})')
-    z_h1, bins_h1, _patches = ax.hist(J_h1, bins=20, density=True, label='Histogram')
-    ax.plot([mJ_h1, mJ_h1], [0, np.amax(z_h1)], 'r', label=f'Mean = {round(mJ_h1)}')
+    fig.suptitle(f'Heuristic policy 1\nTotal cost distribution from N={Nrun} simulation runs (T={T})')
+    z_h1, bins_h1, _patches = ax.hist(J_h1, bins=20, density=True, label='Histogram', color='blue')
+    ax.plot([mJ_h1, mJ_h1], [0, np.amax(z_h1)], color='pink', linestyle='dashed', label=f'Mean = {round(mJ_h1)}')
     ax.set(xlabel='Total cost', ylabel='Probability density')
     ax.legend()
     plt.grid()
@@ -241,9 +243,9 @@ def DP_IC_plot(gt_star: np.ndarray, gt_h1: np.ndarray,
 
     # TOTAL COST HEURISTIC 2
     fig, ax = plt.subplots()
-    fig.suptitle(f'Heuristic policy 2 - Total cost distribution from N={Nrun} simulation runs (T={T})')
-    z_h2, bins_h2, _patches = ax.hist(J_h2, bins=20, density=True, label='Histogram')
-    ax.plot([mJ_h2, mJ_h2], [0, np.amax(z_h2)], 'r', label=f'Mean = {round(mJ_h2)}')
+    fig.suptitle(f'Heuristic policy 2\nTotal cost distribution from N={Nrun} simulation runs (T={T})')
+    z_h2, bins_h2, _patches = ax.hist(J_h2, bins=20, density=True, label='Histogram', color='green')
+    ax.plot([mJ_h2, mJ_h2], [0, np.amax(z_h2)], color='pink', linestyle='dashed', label=f'Mean = {round(mJ_h2)}')
     ax.set(xlabel='Total cost', ylabel='Probability density')
     ax.legend()
     plt.grid()
@@ -261,9 +263,9 @@ def DP_IC_plot(gt_star: np.ndarray, gt_h1: np.ndarray,
     fig, ax = plt.subplots()
     fig.suptitle(f'Total cost distribution from N={Nrun} simulation runs (T={T})', fontsize=13)
     ax.set(xlabel='Total cost', ylabel='Probability density')
-    plt.bar(bins_h1, z_h1, color='blue', label='Heuristic 1')
-    plt.bar(bins_h2, z_h2, color='green', label='Heuristic 2')
-    plt.bar(bins_star, z_star, color='red', label='Optimal policy')
+    plt.bar(bins_star, z_star, width=width_star*0.9, color='red', label='Optimal policy')
+    plt.bar(bins_h1, z_h1, width=width_h1*0.9, color='blue', label='Heuristic 1')
+    plt.bar(bins_h2, z_h2, width=width_h2*0.9, color='green', label='Heuristic 2')
     ax.legend()
     plt.grid()
     plt.show()
@@ -272,7 +274,7 @@ def DP_IC_plot(gt_star: np.ndarray, gt_h1: np.ndarray,
     ax.bar3d(bins_star, np.ones_like(bins_star), np.zeros_like(bins_star), width_star, 0.5, z_star, color='red')
     ax.bar3d(bins_h1, np.ones_like(bins_h1) * 2, np.zeros_like(bins_h1), width_h1, 0.5, z_h1, color='blue')
     ax.bar3d(bins_h2, np.ones_like(bins_h2) * 3, np.zeros_like(bins_h2), width_h2, 0.5, z_h2, color='green')
-    ax.set_title('Total cost distribution: heuristic 1 (blue, heuristic 2 (green) and optimal (red)')
+    ax.set_title('Total cost distribution\nHeuristic 1 (blue), Heuristic 2 (green) and Optimal (red)')
     ax.set_xlabel('Total cost')
     ax.set_ylabel('Policy')
     ax.set_zlabel('Probability density')

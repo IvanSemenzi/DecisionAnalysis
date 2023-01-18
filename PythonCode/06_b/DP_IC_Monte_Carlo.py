@@ -1,5 +1,3 @@
-import numpy as np
-
 from utils import *
 
 
@@ -71,10 +69,8 @@ x0 = C
 for k in range(Nrun):
     # optimal policy
     x_star[:, k], u_star[:, k], gt_star[:, k], w_star[:, k] = DP_IC_singlerun(T, U_star, x0)
-
     # heuristic 1
     x_h1[:, k], u_h1[:, k], gt_h1[:, k], w_h1[:, k] = DP_IC_singlerun(T, U_h1, x0)
-
     # heuristic 2
     x_h2[:, k], u_h2[:, k], gt_h2[:, k], w_h2[:, k] = DP_IC_singlerun(T, U_h2, x0)
 
