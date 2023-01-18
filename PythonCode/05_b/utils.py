@@ -67,7 +67,7 @@ def DP_appliance_plot_results(U: np.ndarray,
     # compare with naive policy: Display when we run
     fig, ax = plt.subplots()
     fig.suptitle(f'Naive cost = {naive_cost}\n Optimal cost = {opt_cost}\n Relative gain = {round(rel_gain, 2)}%', fontsize=13)
-    ax.set(xlabel='Time [15min]', ylabel='Energy price [EUR/kWh')
+    ax.set(xlabel='Time [15min]', ylabel='Energy price [EUR/kWh]')
     # plot the prices at each time slot
     plt.bar(np.arange(len(price)), price, align='edge', label='Energy prices')
     # plot when we run according to naive policy (green slots)

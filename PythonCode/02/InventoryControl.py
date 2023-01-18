@@ -10,7 +10,7 @@ print(f'Time horizon T: {T_max}')
 print()
 print(f'Total cost : {int(np.sum(gt))}')
 print(f'First reorder time: {next((i for i, x in enumerate(u[0]) if x), None)}')
-print(f'Total number of orders: {int(np.sum(u))}')
+print(f'Total number of orders: {np.count_nonzero(u)}')
 
 # plot
 fig, axs = plt.subplots(2, 2)
