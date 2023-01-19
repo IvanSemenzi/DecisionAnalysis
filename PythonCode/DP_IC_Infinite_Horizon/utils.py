@@ -24,6 +24,8 @@ def DP_IC_setup():
                 C: maximum capacity
                 W_max: maximum demand
                 W_set: demand possible values
+                alpha: discount factor
+                delta: termination criterion
     """
 
     pW = np.array([0.2, 0.2, 0.3, 0.2, 0.1])    # pmf of demand values
@@ -31,8 +33,11 @@ def DP_IC_setup():
     C = 10          # max capacity
     W_max = 4       # max demand
     W_set = np.arange(W_max+1, dtype=int)       # range of possible demand values (including W_max)
+    alpha = 0.1
+    Max_cost = cost[0] + 9 * cost[1]
+    delta = Max_cost / (alpha * 10000000)
 
-    return pW, cost, C, W_max, W_set
+    return pW, cost, C, W_max, W_set, alpha, delta
 
 
 def DP_IC_f(s: int, u: int, w: int) -> int:
@@ -68,7 +73,7 @@ def DP_IC_singlerun(T: int, U: np.ndarray, x0: int):
     """
 
     :param T:       horizon for simulation
-    :param U:       matrix U (n_state, T) stores the policy
+    :param U:       matrix U (n_state) stores the policy
     :param x0:      initial state
     :return:        x is the state trajectory over the simulation
                     u is the sequence of inputs chosen according to policy U
@@ -77,7 +82,7 @@ def DP_IC_singlerun(T: int, U: np.ndarray, x0: int):
     """
 
     # initialization
-    pW, cost, C, W_max, W_set = DP_IC_setup()
+    pW, cost, C, W_max, W_set, _, _ = DP_IC_setup()
     x = np.zeros(T+1, dtype=int)        # state
     gt = np.zeros(T, dtype=int)         # stage cost
     u = np.zeros(T, dtype=int)          # input
@@ -90,7 +95,7 @@ def DP_IC_singlerun(T: int, U: np.ndarray, x0: int):
     for t in range(T):
         # use policy U to select the input
         # N.B. State x is in row x of matrix U (Python is great)
-        u[t] = U[x[t], t]
+        u[t] = U[x[t]]
 
         # next state (inventory level)
         x[t+1] = x[t] + u[t] - W_real[t]
@@ -101,17 +106,17 @@ def DP_IC_singlerun(T: int, U: np.ndarray, x0: int):
     return x, u, gt, W_real
 
 
-def DP_IC_expected_cost(s: int, u: int, V_next: np.ndarray) -> int:
+def DP_IC_expected_cost(s: int, u: int, V: np.ndarray) -> int:
     """
 
     :param s:           current state
     :param u:           current input
-    :param V_next:      vector containing the optimal value function at next time for all possible states
+    :param V:           vector containing the optimal value function at next time for all possible states
     :return:            ec: expected cost=expected value of stage cost + cost-to-go
     """
 
     # initialization (W_max+1 is used as N_w)
-    pW, cost, _, W_max, W_set = DP_IC_setup()
+    pW, cost, _, W_max, W_set, alpha, _ = DP_IC_setup()
 
     # expected value of stage cost (deterministic => E[g]=g)
     esc = DP_IC_stage_cost(s, u, cost)
@@ -127,28 +132,28 @@ def DP_IC_expected_cost(s: int, u: int, V_next: np.ndarray) -> int:
         p_x_next[l] = pW[l]
 
     # compute expected value
-    ev = np.dot(p_x_next, V_next[x_next])
+    ev = np.dot(p_x_next, V[x_next])
     # same thing, different implementation
     # ev = 0
     # for h in range(W_max+1):
-    #     ev += p_x_next[h] * V_next[x_next[h]]
+    #     ev += p_x_next[h] * V[x_next[h]]
 
     # expected value of stage cost + cost-to-go
-    ec = esc + ev
+    ec = esc + alpha * ev
 
     return ec
 
 
-def DP_IC_optimal_policy(T: int):
+def DP_IC_optimal_policy():
     """
 
-    :param T:       time horizon for simulation
-    :return:        U: matrix (n_state,T) storing the optimal policy (optimal input if at time t we are in state x)
-                    V: matrix (n_state,T+1) storing the optimal cost-to-go if at time t we are in state x
+    :return:        U: vector (n_state) storing the optimal policy (optimal input if we are in state x)
+                    V: vector (n_state) storing the optimal cost-to-go if we are in state x
+                    iter: number of iterations of the algorithm before fulfilling termination criterion
     """
 
     # initialization
-    _, _, C, W_max, _ = DP_IC_setup()
+    _, _, C, W_max, _, alpha, delta = DP_IC_setup()
 
     N_state = C+1
     X_set = np.arange(N_state, dtype=int)           # possible states
@@ -161,40 +166,43 @@ def DP_IC_optimal_policy(T: int):
         stop = C - X_set[k] + 1
         U_set[X_set[k]] = np.arange(start, stop, dtype=int)
 
-    # optimal policy (optimal input at time t if in state x)
-    U = np.zeros((N_state, T), dtype=int)
-    # cost-to-go function
-    V = np.zeros((N_state, T+1), dtype=int)
+    # optimal policy (optimal input if in state x)
+    U = np.zeros(N_state, dtype=int)
 
     # DP algorithm
     # 1. Initialization
-    V[:, T] = np.zeros((N_state), dtype=int)         # no terminal cost
+    V = np.zeros(N_state, dtype=float)
+    V_next = np.zeros(N_state, dtype=float)
 
     # 2. Main Loop
-    for t in range(T - 1, -1, -1):
+    iter = 0
+    while True:
+        iter += 1
+        V = np.copy(V_next)
         for k in range(N_state):
-            # s is the current state
-            s = X_set[k]
+            s = X_set[k]        # actual state
             # possible inputs for current state s
             U_aux = U_set[k]
             N_aux = len(U_aux)
-            C_aux = np.zeros_like(U_aux)
+            C_aux = np.zeros(N_aux)
             for h in range(N_aux):
                 # u is the current input
                 u = U_aux[h]
                 # expected total cost if at time t and state s we apply input u
-                C_aux[h] = DP_IC_expected_cost(s, u, V[:, t+1])
+                C_aux[h] = DP_IC_expected_cost(s, u, V)
             # h_star is the index of the optimal input u_star
             # u_star will be U_aux(h_star)
             h_star = np.argmin(C_aux)
             u_star = U_aux[h_star]
             V_star = C_aux[h_star]
             # optimal input if in state x[k] at time t
-            U[k, t] = u_star
+            U[k] = u_star
             # cost-to-go if in state x[k] at time t
-            V[k, t] = V_star
+            V_next[k] = V_star
+        if np.amax(np.abs(V_next - V)) < delta:
+            break
 
-    return U, V
+    return U, V_next, iter
 
 
 def DP_IC_plot(gt_star: np.ndarray, gt_h1: np.ndarray,
