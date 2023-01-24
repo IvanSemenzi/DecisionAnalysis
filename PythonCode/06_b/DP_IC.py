@@ -1,4 +1,4 @@
-from utils import *
+from DP_IC_utils import *
 
 
 # parameters and initialization
@@ -6,9 +6,6 @@ from utils import *
 T = 100
 # load parameters
 pW, cost, C, W_max, W_set = DP_IC_setup()
-# initialize matrices
-U = np.zeros((C+1, T))    # stores the optimal policy
-V = np.zeros((C+1, T+1))  # stores cost-to-go
 
 # compute optimal policy (1 run)
 U, V = DP_IC_optimal_policy(T)

@@ -28,8 +28,8 @@ def DP_IC_setup():
 
     pW = np.array([0.2, 0.2, 0.3, 0.2, 0.1])    # pmf of demand values
     cost = np.array([10, 2], dtype=int)         # cost vector
-    C = 10          # max capacity
-    W_max = 4       # max demand
+    C = 10                                      # max capacity
+    W_max = 4                                   # max demand
     W_set = np.arange(W_max+1, dtype=int)       # range of possible demand values (including W_max)
 
     return pW, cost, C, W_max, W_set
