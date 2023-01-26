@@ -174,5 +174,3 @@ def DP_SF_optimal_policy(N_state: int, p: int):
                     u_star = 1
                     # value function is zero
                     V_star = 0
-                else:
-                    # for all states, consider possible inputs u
